@@ -10,3 +10,10 @@ import numpy as np
 from sklearn.neighbors import KNeighborsRegressor
 
 
+def encode_categorical_columns(df):
+    df_encoded = df.copy()
+    object_columns = df_encoded.select_dtypes(include=["object"]).columns
+    for column in object_columns:
+        le = LabelEncoder()
+        df_encoded[column] = le.fit_transform(df_encoded[column].astype(str))
+    return df_encoded
