@@ -17,3 +17,30 @@ def encode_categorical_columns(df):
         le = LabelEncoder()
         df_encoded[column] = le.fit_transform(df_encoded[column].astype(str))
     return df_encoded
+
+
+def best_k(df, target_column, min_k=2, max_k=15):
+    le = LabelEncoder()
+    df_encoded = df.copy()
+    object_columns = df_encoded.select_dtypes(include=['object']).columns
+    for column in object_columns:
+        df_encoded[column] = le.fit_transform(df_encoded[column].astype(str))
+    imputer = SimpleImputer(strategy='mean')
+    df_imputed = pd.DataFrame(imputer.fit_transform(
+        df_encoded), columns=df_encoded.columns)
+    X = df_imputed.drop(target_column, axis=1)
+    y = df_imputed[target_column]
+    pipeline = Pipeline(steps=[('model', KNeighborsRegressor(n_neighbors=3))])
+    params = {'model__n_neighbors': [3, 5, 7],
+              'model__weights': ['uniform', 'distance']}
+    best_k = 0
+    best_score = -np.inf
+    for k in range(min_k, max_k+1):
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+        grid_search = GridSearchCV(
+            pipeline, params, cv=kf, scoring='neg_mean_squared_error', n_jobs=-1)
+        grid_search.fit(X, y)
+        if grid_search.best_score_ > best_score:
+            best_score = grid_search.best_score_
+            best_k = k
+    return best_k
