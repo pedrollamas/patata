@@ -44,3 +44,11 @@ def best_k(df, target_column, min_k=2, max_k=15):
             best_score = grid_search.best_score_
             best_k = k
     return best_k
+
+
+def impute_missing_values_with_knn(df, n_neighbors=10):
+    df_imputed = df.copy()
+    imputer = KNNImputer(n_neighbors=n_neighbors)
+    numeric_columns = df_imputed.select_dtypes(include=['int64', 'float64']).columns
+    df_imputed[numeric_columns] = imputer.fit_transform(df_imputed[numeric_columns])
+    return df_imputed
